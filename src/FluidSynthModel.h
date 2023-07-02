@@ -75,8 +75,10 @@ private:
     float currentSampleRate;
 
     void unloadAndLoadFont(const String &absPath);
+    void unloadAndLoadFontFromMemory(void *sf, size_t fileSize);
     void loadFont(const String &absPath);
-    
+    void loadFontFromMemory(void *sf, fluid_long_long_t fileSize);
+
     int sfont_id;
     unsigned int channel;
 

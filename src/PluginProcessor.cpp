@@ -40,6 +40,7 @@ JuicySFAudioProcessor::JuicySFAudioProcessor()
         }, {} }, nullptr);
     valueTreeState.state.appendChild({ "soundFont", {
         { "path", "" },
+        { "memfile", var(nullptr, 0) }
     }, {} }, nullptr);
     // no properties, no subtrees (yet)
     valueTreeState.state.appendChild({ "banks", {}, {} }, nullptr);
@@ -77,7 +78,7 @@ JuicySFAudioProcessor::~JuicySFAudioProcessor()
 }
 
 void JuicySFAudioProcessor::setupServer() {
-    fLoadServer = std::make_unique<InstrServer>();
+    fLoadServer = std::make_unique<InstrServer>(valueTreeState);
     fLoadServer->beginWaitingForSocket(kPortNumber);
 }
 
@@ -87,18 +88,10 @@ void JuicySFAudioProcessor::setupClient() {
     String hostname("127.0.0.1");
 
     if (client->connectToSocket(hostname, kPortNumber, 5*1000)) {
-        AlertWindow::showMessageBoxAsync (MessageBoxIconType::InfoIcon, "Hey now",
-                                          "Sending message!",
-                                          "OK");
-//        LoadMessage msg = LoadMessage();
         InstrServerMessage msg = InstrServerMessage(InstrServerMessageCode::kSendSF2, nullptr, 0);
         msg.FromFile("/Users/mike/sfiii song 14.sf2");
 //        msg.AppendString("Network Sent String!");
         client->sendMessage(msg.GetMemoryBlock());
-
-        AlertWindow::showMessageBoxAsync (MessageBoxIconType::InfoIcon, "Hey now",
-                                          "Message Sent! message code is: " + String(msg.GetCode()),
-                                          "OK");
     }
 }
 
@@ -275,6 +268,8 @@ void JuicySFAudioProcessor::getStateInformation (MemoryBlock& destData)
         {
             String value = tree.getProperty("path", "");
             newElement->setAttribute("path", value);
+            String memFileVal = tree.getProperty("memfile", var(nullptr, 0));
+            newElement->setAttribute("memfile", memFileVal);
         }
     }
     

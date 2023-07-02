@@ -9,18 +9,19 @@ class InstrServerConnection;
 class InstrServer : public InterprocessConnectionServer
 {
 public:
-    InstrServer();
+    InstrServer(AudioProcessorValueTreeState& valueTreeState);
     ~InstrServer() override;
 
     InterprocessConnection* createConnectionObject() override;
 private:
+    AudioProcessorValueTreeState& valueTreeState;
     OwnedArray<InstrServerConnection> fConnections;
 };
 
 
 class InstrServerConnection: public InterprocessConnection {
 public:
-    InstrServerConnection();
+    InstrServerConnection(AudioProcessorValueTreeState& valueTreeState);
     ~InstrServerConnection() override;
 
     enum ConnectionState
@@ -36,6 +37,7 @@ public:
     void messageReceived(const juce::MemoryBlock &message) override;
 
 private:
+    AudioProcessorValueTreeState& valueTreeState;
     CriticalSection fLock;
     ConnectionState fConnected;
 };

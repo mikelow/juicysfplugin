@@ -31,6 +31,65 @@ const map<String, fluid_midi_control_change> FluidSynthModel::paramToController{
     return map;
 }()};
 
+fluid_long_long_t fileOffset;
+fluid_long_long_t fileSize;
+
+#ifdef _WIN32
+#define FLUID_PRIi64 "I64d"
+#else
+#define FLUID_PRIi64 "lld"
+#endif
+
+//ScopedPointer<FileLogger> logger = FileLogger::createDateStampedLogger(
+//        "JuicySFTest",
+//        "Server_",
+//        ".txt",
+//        "*** SERVER ***");
+
+void *mem_open(const char *path)
+{
+    void *buffer;
+
+    if(path[0] != '&')
+    {
+        return nullptr;
+    }
+    sscanf(path, "&%p %" FLUID_PRIi64, &buffer, &fileSize);
+    fileOffset = 0;
+    return buffer;
+}
+
+int mem_read(void *buf, fluid_long_long_t count, void * data)
+{
+    memcpy(buf, ((uint8_t*)data) + fileOffset, (size_t)count);
+    fileOffset += count;
+    return FLUID_OK;
+}
+
+int mem_seek(void * data, fluid_long_long_t offset, int whence)
+{
+    if (whence == SEEK_SET) {
+        fileOffset = offset;
+    } else if (whence == SEEK_CUR) {
+        fileOffset += offset;
+    }  else if (whence == SEEK_END) {
+        fileOffset = fileSize + offset;
+    }
+    return FLUID_OK;
+}
+
+int mem_close(void *handle)
+{
+    fileOffset = 0;
+    fileSize = 0;
+    return FLUID_OK;
+}
+
+fluid_long_long_t mem_tell(void *handle)
+{
+    return fileOffset;
+}
+
 FluidSynthModel::FluidSynthModel(
     AudioProcessorValueTreeState& valueTreeState
     )
@@ -72,7 +131,18 @@ void FluidSynthModel::initialise() {
 #endif
 
     synth = { new_fluid_synth(settings.get()), delete_fluid_synth };
+
+    fluid_sfloader_t *my_sfloader = new_fluid_defsfloader(settings.get());
+    fluid_sfloader_set_callbacks(my_sfloader,
+                                 mem_open,
+                                 mem_read,
+                                 mem_seek,
+                                 mem_tell,
+                                 mem_close);
+    fluid_synth_add_sfloader(synth.get(), my_sfloader);
+
     fluid_synth_set_sample_rate(synth.get(), currentSampleRate);
+
 
     // I can't hear a damned thing
     fluid_synth_set_gain(synth.get(), 2.0);
@@ -217,6 +287,13 @@ void FluidSynthModel::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasCh
             if (soundFontPath.isNotEmpty()) {
                 unloadAndLoadFont(soundFontPath);
             }
+        } else if (property == StringRef("memfile")) {
+            var memfile = treeWhosePropertyHasChanged.getProperty("memfile", var(nullptr, 0));
+
+            if (memfile.isBinaryData() && memfile.getBinaryData()->getSize() != 0) {
+                const size_t dataSize = memfile.getBinaryData()->getSize();
+                unloadAndLoadFontFromMemory(memfile.getBinaryData()->getData(), dataSize);
+            }
         }
     }
 }
@@ -244,11 +321,34 @@ void FluidSynthModel::unloadAndLoadFont(const String &absPath) {
     loadFont(absPath);
 }
 
+void FluidSynthModel::unloadAndLoadFontFromMemory(void *sf, size_t fileSize) {
+    // in the base case, there is no font loaded
+    if (fluid_synth_sfcount(synth.get()) > 0) {
+        // if -1 is returned, that indicates failure
+        // not really sure how to handle "fail to unload"
+        fluid_synth_sfunload(synth.get(), sfont_id, 1);
+        sfont_id = -1;
+    }
+    loadFontFromMemory(sf, fileSize);
+}
+
 void FluidSynthModel::loadFont(const String &absPath) {
     if (!absPath.isEmpty()) {
         sfont_id = fluid_synth_sfload(synth.get(), absPath.toStdString().c_str(), 1);
         // if -1 is returned, that indicates failure
     }
+    // refresh regardless of success, if only to clear the table
+    refreshBanks();
+}
+
+void FluidSynthModel::loadFontFromMemory(void *sf, fluid_long_long_t fileSize) {
+    char abused_filename[128];
+    snprintf(abused_filename, 128, "&%p %" FLUID_PRIi64, sf, fileSize);
+
+    const char* testString = (char*)sf;
+
+    sfont_id = fluid_synth_sfload(synth.get(), abused_filename, 1);
+        // if -1 is returned, that indicates failure
     // refresh regardless of success, if only to clear the table
     refreshBanks();
 }

@@ -1,7 +1,8 @@
 #include "InstrServer.h"
 #include "InstrServerMessage.h"
 
-InstrServer::InstrServer() {
+InstrServer::InstrServer(AudioProcessorValueTreeState& valueTreeState)
+: valueTreeState(valueTreeState) {
 
 }
 
@@ -11,12 +12,13 @@ InstrServer::~InstrServer() {
 
 InterprocessConnection *InstrServer::createConnectionObject() {
     DBG("InstrServer::createConnectionObject()")
-    InstrServerConnection* connection = new InstrServerConnection();
+    InstrServerConnection* connection = new InstrServerConnection(valueTreeState);
     fConnections.add(connection);
     return connection;
 }
 
-InstrServerConnection::InstrServerConnection() {
+InstrServerConnection::InstrServerConnection(AudioProcessorValueTreeState& valueTreeState)
+: valueTreeState(valueTreeState) {
     DBG("InstrServerConnection::InstrServerConnection()")
 }
 
@@ -40,22 +42,18 @@ void InstrServerConnection::connectionLost() {
 void InstrServerConnection::messageReceived(const juce::MemoryBlock &message) {
     DBG("InstrServerConnection::messageReceived()")
     const char* test = static_cast<const char*>(message.getData());
-    AlertWindow::showMessageBoxAsync (MessageBoxIconType::InfoIcon, "Received Message going to parse",
-                                      String("YEP YEP"),
-                                      "OK");
-
 
     InstrServerMessage serverMessage = InstrServerMessage(message);
     InstrServerMessageCode code = serverMessage.GetCode();
 
-
-
-
     switch (code) {
-        case InstrServerMessageCode::kSendSF2:
-            AlertWindow::showMessageBoxAsync (MessageBoxIconType::InfoIcon, "Got SendSF2 message",
-                                              "Got Code " + String(code),
-                                              "OK");
+        case InstrServerMessageCode::kSendSF2: {
+            Value value{valueTreeState.state.getChildWithName("soundFont").getPropertyAsValue("memfile", nullptr)};
+            value.setValue(var(serverMessage.GetData(), serverMessage.GetDataLength()));
+
+//            Value value{valueTreeState.state.getChildWithName("soundFont").getPropertyAsValue("path", nullptr)};
+//            value.setValue("/Users/mike/sfiii song 14.sf2");
+        }
             break;
         default:
             break;
