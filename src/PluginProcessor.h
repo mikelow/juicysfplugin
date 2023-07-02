@@ -12,6 +12,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "FluidSynthModel.h"
+#include "InstrServer.h"
 #include <list>
 
 using namespace std;
@@ -65,6 +66,8 @@ public:
     MidiKeyboardState keyboardState;
 
 private:
+    void setupServer();
+    void setupClient();
     void initialiseSynth();
 
     AudioProcessorValueTreeState valueTreeState;
@@ -73,6 +76,8 @@ private:
     Synthesiser synth;
 
     AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
+    std::unique_ptr<InstrServer> fLoadServer;
 
     static BusesProperties getBusesProperties();
 

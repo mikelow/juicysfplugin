@@ -9,10 +9,14 @@
 */
 
 #include "PluginProcessor.h"
+
+#include <memory>
 #include "PluginEditor.h"
 #include "MidiConstants.h"
 #include "Util.h"
 #include "GuiConstants.h"
+#include "InstrClient.h"
+#include "InstrServerMessage.h"
 
 using namespace std;
 using Parameter = AudioProcessorValueTreeState::Parameter;
@@ -39,7 +43,9 @@ JuicySFAudioProcessor::JuicySFAudioProcessor()
     }, {} }, nullptr);
     // no properties, no subtrees (yet)
     valueTreeState.state.appendChild({ "banks", {}, {} }, nullptr);
-    
+
+    setupServer();
+    setupClient();
     initialiseSynth();
 }
 
@@ -66,6 +72,34 @@ AudioProcessorValueTreeState::ParameterLayout JuicySFAudioProcessor::createParam
 
 JuicySFAudioProcessor::~JuicySFAudioProcessor()
 {
+    fLoadServer->stop();
+    fLoadServer = nullptr;
+}
+
+void JuicySFAudioProcessor::setupServer() {
+    fLoadServer = std::make_unique<InstrServer>();
+    fLoadServer->beginWaitingForSocket(kPortNumber);
+}
+
+void JuicySFAudioProcessor::setupClient() {
+    InstrClient* client = new InstrClient();
+
+    String hostname("127.0.0.1");
+
+    if (client->connectToSocket(hostname, kPortNumber, 5*1000)) {
+        AlertWindow::showMessageBoxAsync (MessageBoxIconType::InfoIcon, "Hey now",
+                                          "Sending message!",
+                                          "OK");
+//        LoadMessage msg = LoadMessage();
+        InstrServerMessage msg = InstrServerMessage(InstrServerMessageCode::kSendSF2, nullptr, 0);
+        msg.FromFile("/Users/mike/sfiii song 14.sf2");
+//        msg.AppendString("Network Sent String!");
+        client->sendMessage(msg.GetMemoryBlock());
+
+        AlertWindow::showMessageBoxAsync (MessageBoxIconType::InfoIcon, "Hey now",
+                                          "Message Sent! message code is: " + String(msg.GetCode()),
+                                          "OK");
+    }
 }
 
 void JuicySFAudioProcessor::initialiseSynth() {

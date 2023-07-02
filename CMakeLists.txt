@@ -89,6 +89,9 @@ target_sources(${PROJECT_NAME}
   PRIVATE
     "${SRC_DIR}/FilePicker.cpp"
     "${SRC_DIR}/FluidSynthModel.cpp"
+    "${SRC_DIR}/InstrClient.cpp"
+    "${SRC_DIR}/InstrServer.cpp"
+    "${SRC_DIR}/InstrServerMessage.cpp"
     "${SRC_DIR}/MyColours.cpp"
     "${SRC_DIR}/Pills.cpp"
     "${SRC_DIR}/PluginEditor.cpp"
