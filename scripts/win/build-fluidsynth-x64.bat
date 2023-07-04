@@ -11,6 +11,7 @@ cd /d %FLUIDSYNTH_BUILD_DIR%
 
 cmake  -A x64 ^
     %FLUIDSYNTH_DIR% ^
+    -DBUILD_SHARED_LIBS=0 ^
     -Denable-floats=1 ^
     -Denable-libsndfile=1 ^
     -Denable-threads=1 ^
