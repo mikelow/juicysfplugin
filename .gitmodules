@@ -4,3 +4,4 @@
 [submodule "external/fluidsynth"]
 	path = external/fluidsynth
 	url = https://github.com/mikelow/fluidsynth.git
+	branch = sansglib

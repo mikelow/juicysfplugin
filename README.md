@@ -144,7 +144,7 @@ Example:
 
 Install the following packages if they are not installed:
 
-`sudo apt install clang cmake doxygen g++ gcc libomp-dev libsndfile1-dev libsystemd-dev libxslt1-dev make pkgconfig`
+`sudo apt install clang cmake doxygen g++ gcc libomp-dev libsndfile1-dev libsystemd-dev libxslt1-dev make pkg-config libxrandr-dev libxinerama-dev libxcursor-dev libfreetype6-dev libasound2-dev`
 
 Run build scripts from `scripts\linux\`. First `build-fluidsynth`, then `build`.
 
