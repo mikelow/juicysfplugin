@@ -1,5 +1,7 @@
 #include "InstrServerMessage.h"
 
+using namespace juce;
+
 InstrServerMessage::InstrServerMessage(InstrServerMessageCode code, void * data = nullptr, size_t numBytes = 0)
 {
     uint32 code32 = (uint32)code;

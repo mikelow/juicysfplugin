@@ -13,7 +13,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "FluidSynthModel.h"
 #include "InstrServer.h"
-#include <list>
+#include "InstrClient.h"
 
 using namespace std;
 
@@ -78,6 +78,7 @@ private:
     AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
     std::unique_ptr<InstrServer> fLoadServer;
+    OwnedArray <InstrClient, CriticalSection> activeConnections;
 
     static BusesProperties getBusesProperties();
 

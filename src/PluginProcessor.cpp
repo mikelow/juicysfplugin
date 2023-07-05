@@ -11,6 +11,7 @@
 #include "PluginProcessor.h"
 
 #include <memory>
+#include <thread>
 #include "PluginEditor.h"
 #include "MidiConstants.h"
 #include "Util.h"
@@ -19,6 +20,7 @@
 #include "InstrServerMessage.h"
 
 using namespace std;
+using namespace juce;
 using Parameter = AudioProcessorValueTreeState::Parameter;
 
 AudioProcessor* JUCE_CALLTYPE createPluginFilter();
@@ -45,9 +47,16 @@ JuicySFAudioProcessor::JuicySFAudioProcessor()
     // no properties, no subtrees (yet)
     valueTreeState.state.appendChild({ "banks", {}, {} }, nullptr);
 
-    setupServer();
-    setupClient();
     initialiseSynth();
+    setupServer();
+
+    auto myFunction = [this]() {
+        // Your code here...
+//        setupClient();
+    };
+
+    std::thread myThread(myFunction);
+    myThread.detach();
 }
 
 AudioProcessorValueTreeState::ParameterLayout JuicySFAudioProcessor::createParameterLayout() {
@@ -79,19 +88,30 @@ JuicySFAudioProcessor::~JuicySFAudioProcessor()
 
 void JuicySFAudioProcessor::setupServer() {
     fLoadServer = std::make_unique<InstrServer>(valueTreeState);
+//    fLoadServer->openPipe();
     fLoadServer->beginWaitingForSocket(kPortNumber);
 }
 
 void JuicySFAudioProcessor::setupClient() {
-    InstrClient* client = new InstrClient();
+//    InstrClient* client = new InstrClient();
+    auto newConnection = make_unique<InstrClient>();
+//    ScopedPointer<InstrClient> newConnection (new InstrClient ());
 
     String hostname("127.0.0.1");
 
-    if (client->connectToSocket(hostname, kPortNumber, 5*1000)) {
-        InstrServerMessage msg = InstrServerMessage(InstrServerMessageCode::kSendSF2, nullptr, 0);
-        msg.FromFile("/Users/mike/sfiii song 14.sf2");
+    if (newConnection->connectToSocket(hostname, kPortNumber, 5*1000)) {
+//    if (newConnection->connectToPipe(kPipeName, kPipeTimeout))  {
+//        InstrServerMessage msg = InstrServerMessage(InstrServerMessageCode::kSendSF2, nullptr, 0);
+        const File file = File("/Users/mike/sfiii song 14.sf2");
+        juce::FileInputStream inputStream (file);
+        MemoryBlock fData;
+        inputStream.readIntoMemoryBlock (fData);
+
+        newConnection->sendSF2File(fData);
+//        msg.FromFile("/Users/mike/sfiii song 14.sf2");
 //        msg.AppendString("Network Sent String!");
-        client->sendMessage(msg.GetMemoryBlock());
+//        client->sendMessage(msg.GetMemoryBlock());
+        activeConnections.add(std::move(newConnection));
     }
 }
 
@@ -268,8 +288,8 @@ void JuicySFAudioProcessor::getStateInformation (MemoryBlock& destData)
         {
             String value = tree.getProperty("path", "");
             newElement->setAttribute("path", value);
-            String memFileVal = tree.getProperty("memfile", var(nullptr, 0));
-            newElement->setAttribute("memfile", memFileVal);
+//            String memFileVal = tree.getProperty("memfile", var(nullptr, 0));
+//            newElement->setAttribute("memfile", memFileVal);
         }
     }
     

@@ -4,7 +4,6 @@
 
 class InstrServerConnection;
 
-#define kPortNumber 0xBEEF
 
 class InstrServer : public InterprocessConnectionServer
 {
@@ -12,10 +11,11 @@ public:
     InstrServer(AudioProcessorValueTreeState& valueTreeState);
     ~InstrServer() override;
 
+    void openPipe();
     InterprocessConnection* createConnectionObject() override;
 private:
     AudioProcessorValueTreeState& valueTreeState;
-    OwnedArray<InstrServerConnection> fConnections;
+    OwnedArray<InstrServerConnection> connections;
 };
 
 
@@ -26,9 +26,14 @@ public:
 
     enum ConnectionState
     {
-        kConnecting = 0,
-        kConnected,
-        kDisconnected
+        Connecting = 0,
+        Connected,
+        Disconnected
+    };
+
+    enum MessageState {
+        WaitingForMessage,
+        ReceivingSF2,
     };
 
     void connectionMade() override;
@@ -38,23 +43,9 @@ public:
 
 private:
     AudioProcessorValueTreeState& valueTreeState;
+    ConnectionState connectionState;
+    MessageState messageState;
+    std::unique_ptr<juce::MemoryBlock> fileContent;
     CriticalSection fLock;
     ConnectionState fConnected;
 };
-
-//class LoadMessage
-//{
-//public:
-//    LoadMessage();
-//    void AppendString(const String& s);
-//    void AppendData(const void* data, size_t numBytes);
-//
-//    const MemoryBlock& GetMemoryBlock() const {
-//        return fData;
-//    }
-//
-//
-//
-//private:
-//    MemoryBlock fData;
-//};

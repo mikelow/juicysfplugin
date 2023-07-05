@@ -1,31 +1,34 @@
 
 #pragma once
 
-#include "../JuceLibraryCode/JuceHeader.h"
+//#include "../JuceLibraryCode/JuceHeader.h"
+#include <juce_core/juce_core.h>
 
 enum InstrServerMessageCode
 {
     kMessageError = 0,
-    kResponseOk,
-    kResponseError,
-    kSendSF2,
+    ResponseOk,
+    ResponseError,
+    SF2Start,
+    SF2Content,
+    SF2End
 };
 
 class InstrServerMessage {
 public:
     InstrServerMessage(InstrServerMessageCode code, void * data, size_t numBytes);
-    explicit InstrServerMessage(const MemoryBlock& message);
+    explicit InstrServerMessage(const juce::MemoryBlock& message);
 
-    bool FromFile(String filePath);
+    bool FromFile(juce::String filePath);
     InstrServerMessageCode GetCode();
     void* GetData();
     size_t GetDataLength();
 
-    const MemoryBlock& GetMemoryBlock() const {
+    const juce::MemoryBlock& GetMemoryBlock() const {
         return fData;
     }
 
     InstrServerMessageCode code;
-    uint32 dataLength;
-    MemoryBlock fData;
+    juce::uint32 dataLength;
+    juce::MemoryBlock fData;
 };
