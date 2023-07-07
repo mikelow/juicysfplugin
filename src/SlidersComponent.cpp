@@ -23,7 +23,7 @@ std::function<void()> SlidersComponent::makeSliderListener(Slider& slider, int c
         // s << slider.getComponentID() << ", controller " << controller << ", value " << slider.getValue() << ", xmlReleaseValue " << value;
         // DEBUG_PRINT(s);
 //        slider.setValue(slider.getValue(), NotificationType::dontSendNotification);
-        fluidSynthModel.setControllerValue(controller, slider.getValue());
+//        fluidSynthModel.setControllerValue(controller, slider.getValue());
     };
 }
 

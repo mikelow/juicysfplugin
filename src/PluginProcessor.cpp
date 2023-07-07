@@ -49,14 +49,15 @@ JuicySFAudioProcessor::JuicySFAudioProcessor()
 
     initialiseSynth();
     setupServer();
+//    setupClient();
 
-    auto myFunction = [this]() {
-        // Your code here...
+//    auto myFunction = [this]() {
+//        // Your code here...
 //        setupClient();
-    };
-
-    std::thread myThread(myFunction);
-    myThread.detach();
+//    };
+//
+//    std::thread myThread(myFunction);
+//    myThread.detach();
 }
 
 AudioProcessorValueTreeState::ParameterLayout JuicySFAudioProcessor::createParameterLayout() {
