@@ -485,9 +485,14 @@ void FluidSynthModel::handleMidiMessage(MidiMessage& m) {
     } else if (m.isSysEx()) {
         auto sysexData = m.getSysExData();
         if (sysexData[0] == 0xBF) {
-            channelGroup = static_cast<int>(sysexData[1]);
-            auto wrappedMsg = juce::MidiMessage(sysexData+2, m.getSysExDataSize()-2, 0);
-            handleMidiMessage(wrappedMsg);
+            // 0xFF data byte is reserved for system reset, used in playback seek
+            if (sysexData[1] == 0xFF) {
+                fluid_synth_system_reset(synth.get());
+            } else {
+                channelGroup = static_cast<int>(sysexData[1]);
+                auto wrappedMsg = juce::MidiMessage(sysexData + 2, m.getSysExDataSize() - 2, 0);
+                handleMidiMessage(wrappedMsg);
+            }
         } else {
             fluid_synth_sysex(
                     synth.get(),
@@ -508,21 +513,25 @@ void FluidSynthModel::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
 
     for (MidiBuffer::Iterator i{midiMessages}; i.getNextEvent(m, time);) {
         DEBUG_PRINT(m.getDescription());
-
         handleMidiMessage(m);
     }
 
-    // fluid_synth_get_cc(fluidSynth, 0, 73, &pval);
-    // Logger::outputDebugString ( juce::String::formatted("hey: %d\n", pval) );
+    buffer.clear();
     auto bufferWritePointers = buffer.getArrayOfWritePointers();
+    if (buffer.getNumChannels() < 2) {
+        AlertWindow::showMessageBoxAsync (AlertWindow::WarningIcon,"Error",
+      "Expected at least 2 write buffers for stereo playback. Is there a problem with the current audio device?.");
+        return;
+    }
+    float* writeBuffers[2] = {bufferWritePointers[0], bufferWritePointers[1] };
 
     fluid_synth_process(
         synth.get(),
         buffer.getNumSamples(),
         2,
-        bufferWritePointers,
-        buffer.getNumChannels(),
-        bufferWritePointers);
+        writeBuffers,
+        2,
+        writeBuffers);
 }
 
 int FluidSynthModel::getNumPrograms()

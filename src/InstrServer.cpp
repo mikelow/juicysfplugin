@@ -58,7 +58,21 @@ void InstrServerConnection::messageReceived(const juce::MemoryBlock& message) {
     InstrServerMessageCode code = serverMessage.GetCode();
 
     switch (code) {
-        case InstrServerMessageCode::SF2Start: {
+        case InstrServerMessageCode::SF2Send: {
+            DBG("InstrServer: RECEIVED SF2SEND");
+            juce::MemoryBlock sf2File(serverMessage.GetData(), serverMessage.GetDataLength());
+
+            Value value{valueTreeState.state.getChildWithName("soundFont").getPropertyAsValue("memfile", nullptr)};
+            value.setValue(var(sf2File.getData(), sf2File.getSize()));
+
+            // send OK response
+            DBG("InstrServer: Sending OK Response");
+            InstrServerMessage response(InstrServerMessageCode::ResponseOk, nullptr, 0);
+            this->sendMessage(response.GetMemoryBlock());
+            break;
+        }
+
+        case InstrServerMessageCode::SF2StartBlockTransfer: {
             DBG("SF2Start");
 
             // Reset the memory block
@@ -67,7 +81,7 @@ void InstrServerConnection::messageReceived(const juce::MemoryBlock& message) {
 
             break;
         }
-        case InstrServerMessageCode::SF2Content: {
+        case InstrServerMessageCode::SF2Block: {
             DBG("SF2Content");
 
             if (messageState != ReceivingSF2) {
@@ -79,7 +93,7 @@ void InstrServerConnection::messageReceived(const juce::MemoryBlock& message) {
             fileContent->append(contentBlock.getData(), contentBlock.getSize());
             break;
         }
-        case InstrServerMessageCode::SF2End: {
+        case InstrServerMessageCode::SF2EndBlockTransfer: {
             DBG("SF2End");
             Value value{valueTreeState.state.getChildWithName("soundFont").getPropertyAsValue("memfile", nullptr)};
             value.setValue(var(fileContent.get()->getData(), fileContent.get()->getSize()));
