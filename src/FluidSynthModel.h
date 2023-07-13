@@ -23,7 +23,7 @@ public:
 
     void initialise();
     
-//    void setControllerValue(int controller, int value);
+    void setControllerValue(int controller, int value);
 
     void processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiMessages);
 
@@ -77,6 +77,7 @@ private:
     void unloadAndLoadFontFromMemory(void *sf, size_t fileSize);
     void loadFont(const String &absPath);
     void loadFontFromMemory(void *sf, fluid_long_long_t fileSize);
+    void reset();
 
 //    fluid_audio_driver_t* adriver = nullptr;
 
