@@ -258,43 +258,43 @@ const StringArray FluidSynthModel::programChangeParams{"bank", "preset"};
 void FluidSynthModel::parameterChanged(const String& parameterID, float newValue) {
     DBG("FluidSynthModel::parameterChanged()");
 
-    if (programChangeParams.contains(parameterID)) {
-        int bank, preset;
-        {
-            RangedAudioParameter *param{valueTreeState.getParameter("bank")};
-            jassert(dynamic_cast<AudioParameterInt*>(param) != nullptr);
-            AudioParameterInt* castParam{dynamic_cast<AudioParameterInt*>(param)};
-            bank = castParam->get();
-        }
-        {
-            RangedAudioParameter *param{valueTreeState.getParameter("preset")};
-            jassert(dynamic_cast<AudioParameterInt*>(param) != nullptr);
-            AudioParameterInt* castParam{dynamic_cast<AudioParameterInt*>(param)};
-            preset = castParam->get();
-        }
-        int bankOffset{fluid_synth_get_bank_offset(synth.get(), sfont_id)};
-        fluid_synth_program_select(
-            synth.get(),
-            0,
-            sfont_id,
-            static_cast<unsigned int>(bankOffset + bank),
-            static_cast<unsigned int>(preset));
-    } else if (
-        // https://stackoverflow.com/a/55482091/5257399
-        auto it{paramToController.find(parameterID)};
-        it != end(paramToController)) {
-        RangedAudioParameter *param{valueTreeState.getParameter(parameterID)};
-        jassert(dynamic_cast<AudioParameterInt*>(param) != nullptr);
-        AudioParameterInt* castParam{dynamic_cast<AudioParameterInt*>(param)};
-        int value{castParam->get()};
-        int controllerNumber{static_cast<int>(it->second)};
-
-        fluid_synth_cc(
-            synth.get(),
-            0,
-            controllerNumber,
-            value);
-    }
+//    if (programChangeParams.contains(parameterID)) {
+//        int bank, preset;
+//        {
+//            RangedAudioParameter *param{valueTreeState.getParameter("bank")};
+//            jassert(dynamic_cast<AudioParameterInt*>(param) != nullptr);
+//            AudioParameterInt* castParam{dynamic_cast<AudioParameterInt*>(param)};
+//            bank = castParam->get();
+//        }
+//        {
+//            RangedAudioParameter *param{valueTreeState.getParameter("preset")};
+//            jassert(dynamic_cast<AudioParameterInt*>(param) != nullptr);
+//            AudioParameterInt* castParam{dynamic_cast<AudioParameterInt*>(param)};
+//            preset = castParam->get();
+//        }
+//        int bankOffset{fluid_synth_get_bank_offset(synth.get(), sfont_id)};
+//        fluid_synth_program_select(
+//            synth.get(),
+//            0,
+//            sfont_id,
+//            static_cast<unsigned int>(bankOffset + bank),
+//            static_cast<unsigned int>(preset));
+//    } else if (
+//        // https://stackoverflow.com/a/55482091/5257399
+//        auto it{paramToController.find(parameterID)};
+//        it != end(paramToController)) {
+//        RangedAudioParameter *param{valueTreeState.getParameter(parameterID)};
+//        jassert(dynamic_cast<AudioParameterInt*>(param) != nullptr);
+//        AudioParameterInt* castParam{dynamic_cast<AudioParameterInt*>(param)};
+//        int value{castParam->get()};
+//        int controllerNumber{static_cast<int>(it->second)};
+//
+//        fluid_synth_cc(
+//            synth.get(),
+//            0,
+//            controllerNumber,
+//            value);
+//    }
 }
 
 void FluidSynthModel::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged,
@@ -316,13 +316,13 @@ void FluidSynthModel::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasCh
     }
 }
 
-void FluidSynthModel::setControllerValue(int controller, int value) {
-    fluid_synth_cc(
-        synth.get(),
-        0,
-        controller,
-        value);
-}
+//void FluidSynthModel::setControllerValue(int controller, int value) {
+//    fluid_synth_cc(
+//        synth.get(),
+//        0,
+//        controller,
+//        value);
+//}
 
 void FluidSynthModel::unloadAndLoadFont(const String &absPath) {
     // in the base case, there is no font loaded
@@ -457,15 +457,15 @@ void FluidSynthModel::handleMidiMessage(MidiMessage& m) {
                     m.getControllerNumber(),
                     m.getControllerValue());
 
-            fluid_midi_control_change controllerNum{static_cast<fluid_midi_control_change>(m.getControllerNumber())};
-            if (auto it{controllerToParam.find(controllerNum)};
-                    it != end(controllerToParam)) {
-                String parameterID{it->second};
-                RangedAudioParameter *param{valueTreeState.getParameter(parameterID)};
-                jassert(dynamic_cast<AudioParameterInt *>(param) != nullptr);
-                AudioParameterInt *castParam{dynamic_cast<AudioParameterInt *>(param)};
-                *castParam = m.getControllerValue();
-            }
+//            fluid_midi_control_change controllerNum{static_cast<fluid_midi_control_change>(m.getControllerNumber())};
+//            if (auto it{controllerToParam.find(controllerNum)};
+//                    it != end(controllerToParam)) {
+//                String parameterID{it->second};
+//                RangedAudioParameter *param{valueTreeState.getParameter(parameterID)};
+//                jassert(dynamic_cast<AudioParameterInt *>(param) != nullptr);
+//                AudioParameterInt *castParam{dynamic_cast<AudioParameterInt *>(param)};
+//                *castParam = m.getControllerValue();
+//            }
         }
     } else if (m.isProgramChange()) {
 #if JUCE_DEBUG
@@ -506,10 +506,17 @@ void FluidSynthModel::handleMidiMessage(MidiMessage& m) {
 //            delete_fluid_midi_event(midi_event);
     } else if (m.isSysEx()) {
         auto sysexData = m.getSysExData();
-        if (sysexData[0] == 0xBF) {
+        auto sysexDataSize = m.getSysExDataSize();
+        if (sysexData[0] == 0x7D) {
             // 0xFF data byte is reserved for system reset, used in playback seek
-            if (sysexData[1] == 0xFF) {
+            if (sysexData[1] == 0x7F) {
                 fluid_synth_system_reset(synth.get());
+            } else if (sysexData[1] == 0x7E) {
+                int numChannels = fluid_synth_count_midi_channels(synth.get());
+                uint8_t mode = sysexData[2];
+                for (int ch = 0; ch < numChannels; ch++) {
+                    fluid_synth_set_portamento_time_mode(synth.get(), ch, mode);
+                }
             } else {
                 channelGroup = static_cast<int>(sysexData[1]);
                 auto wrappedMsg = juce::MidiMessage(sysexData + 2, m.getSysExDataSize() - 2, 0);
