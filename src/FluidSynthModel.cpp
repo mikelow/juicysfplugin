@@ -156,7 +156,7 @@ void FluidSynthModel::initialise() {
 
 
     // I can't hear a damned thing
-    fluid_synth_set_gain(synth.get(), 2.0);
+    fluid_synth_set_gain(synth.get(), 1.0);
 
     reset();
 
