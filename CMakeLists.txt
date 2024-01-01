@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
+include(ExternalProject)
+
 if(ANDROID_PLATFORM)
     set(PROJECT_NAME "juce_jni")
 else()
@@ -104,17 +106,120 @@ target_sources(${PROJECT_NAME}
 )
 
 if(WIN32)
-    find_library (FLUIDSYNTH libfluidsynth.lib PATHS "${FLUIDSYNTH_BUILD_DIR}/src/${CMAKE_BUILD_TYPE}" REQUIRED)
+    ExternalProject_Add(fluidsynth
+            SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${FLUIDSYNTH_DIR}"
+            BINARY_DIR ${FLUIDSYNTH_BUILD_DIR}  # Where to build the project
+            CMAKE_ARGS  # Arguments to pass to the cmake command
+#            -A x64
+            -DBUILD_SHARED_LIBS=0
+            -Denable-floats=1
+            -Denable-libsndfile=1
+            -Denable-threads=1
+            -Denable-pkgconfig=1
+            -Denable-aufile=0
+            -Denable-dbus=0
+            -Denable-dsound=0
+            -Denable-ipv6=0
+            -Denable-jack=0
+            -Denable-ladspa=0
+            -Denable-libinstpatch=0
+            -Denable-midishare=0
+            -Denable-network=0
+            -Denable-openmp=0
+            -Denable-oss=0
+            -Denable-pulseaudio=0
+            -Denable-readline=0
+            -Denable-sdl2=0
+            -Denable-wasapi=0
+            -Denable-waveout=0
+            -Denable-winmidi=0
+            -Denable-alsa=0
+            -Denable-lash=0
+            -DPKG_CONFIG_EXECUTABLE=$ENV{PKG_CONFIG_EXECUTABLE}
+            -DCMAKE_TOOLCHAIN_FILE=$ENV{CMAKE_TOOLCHAIN_FILE}
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            INSTALL_COMMAND ""  # If there's no specific install command, this avoids the default install step
+    )
+    set(FLUIDSYNTH "${FLUIDSYNTH_BUILD_DIR}/src/libfluidsynth.lib")
+    add_dependencies(${PROJECT_NAME} fluidsynth)
 endif(WIN32)
 
 if(CMAKE_SYSTEM MATCHES "Linux")
     message(STATUS "Building for Linux...")
-    find_library (FLUIDSYNTH fluidsynth PATHS "${FLUIDSYNTH_BUILD_DIR}/src" REQUIRED)
+#    find_library (FLUIDSYNTH fluidsynth PATHS "${FLUIDSYNTH_BUILD_DIR}/src" REQUIRED)
+
+    ExternalProject_Add(fluidsynth
+            SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${FLUIDSYNTH_DIR}"
+            BINARY_DIR ${FLUIDSYNTH_BUILD_DIR}  # Where to build the project
+            CMAKE_ARGS  # Arguments to pass to the cmake command
+            -Denable-floats=1
+            -Denable-libsndfile=1
+            -Denable-threads=1
+            -Denable-pkgconfig=1
+            -Denable-aufile=0
+            -Denable-dbus=0
+            -Denable-dsound=0
+            -Denable-ipv6=0
+            -Denable-jack=0
+            -Denable-ladspa=0
+            -Denable-libinstpatch=0
+            -Denable-midishare=0
+            -Denable-network=0
+            -Denable-openmp=0
+            -Denable-oss=0
+            -Denable-pulseaudio=0
+            -Denable-readline=0
+            -Denable-sdl2=0
+            -Denable-wasapi=0
+            -Denable-waveout=0
+            -Denable-winmidi=0
+            -Denable-alsa=0
+            -Denable-lash=0
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            INSTALL_COMMAND ""  # If there's no specific install command, this avoids the default install step
+    )
+    set(FLUIDSYNTH "${FLUIDSYNTH_BUILD_DIR}/src/libfluidsynth.so")
+    add_dependencies(${PROJECT_NAME} fluidsynth)
 endif()
 
 if(CMAKE_SYSTEM MATCHES "Darwin")
     message(STATUS "Building for MacOS...")
-    find_library (FLUIDSYNTH fluidsynth PATHS "${FLUIDSYNTH_BUILD_DIR}/src" REQUIRED)
+#    find_library (FLUIDSYNTH fluidsynth PATHS "${FLUIDSYNTH_BUILD_DIR}/src" REQUIRED)
+
+    # Add FluidSynth as an external project
+    ExternalProject_Add(fluidsynth
+            SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${FLUIDSYNTH_DIR}"
+            BINARY_DIR ${FLUIDSYNTH_BUILD_DIR}  # Where to build the project
+            CMAKE_ARGS  # Arguments to pass to the cmake command
+            -Denable-floats=1
+            -Denable-libsndfile=1
+            -Denable-threads=1
+            -Denable-pkgconfig=1
+            -Denable-aufile=0
+            -Denable-dbus=0
+            -Denable-dsound=0
+            -Denable-ipv6=0
+            -Denable-jack=0
+            -Denable-ladspa=0
+            -Denable-libinstpatch=0
+            -Denable-midishare=0
+            -Denable-network=0
+            -Denable-openmp=0
+            -Denable-oss=0
+            -Denable-pulseaudio=0
+            -Denable-readline=0
+            -Denable-sdl2=0
+            -Denable-wasapi=0
+            -Denable-waveout=0
+            -Denable-winmidi=0
+            -Denable-alsa=0
+            -Denable-lash=0
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            INSTALL_COMMAND ""  # If there's no specific install command, this avoids the default install step
+    )
+
+    set(FLUIDSYNTH "${FLUIDSYNTH_BUILD_DIR}/src/FluidSynth.framework")
+    add_dependencies(${PROJECT_NAME} fluidsynth)
 endif()
 
 target_link_libraries(${PROJECT_NAME}
