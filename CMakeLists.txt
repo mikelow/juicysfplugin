@@ -130,43 +130,38 @@ set(FLUIDSYNTH_COMMON_ARGS
         -Denable-winmidi=0
         -Denable-alsa=0
         -Denable-lash=0
+        -DBUILD_SHARED_LIBS=0
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
 )
 
-# Configure ExternalProject_Add for different systems
+# Platform-specific configurations
 if(WIN32)
     message(STATUS "Building for Windows...")
-    ExternalProject_Add(fluidsynth
-            SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${FLUIDSYNTH_DIR}"
-            BINARY_DIR ${FLUIDSYNTH_BUILD_DIR}
-            CMAKE_ARGS
-            ${FLUIDSYNTH_COMMON_ARGS}
-            -DBUILD_SHARED_LIBS=0
-            -DPKG_CONFIG_EXECUTABLE=$ENV{PKG_CONFIG_EXECUTABLE}
-            -DCMAKE_TOOLCHAIN_FILE=$ENV{CMAKE_TOOLCHAIN_FILE}
-            INSTALL_COMMAND ""
-    )
-    set(FLUIDSYNTH "${FLUIDSYNTH_BUILD_DIR}/src/libfluidsynth.lib")
-elseif(CMAKE_SYSTEM MATCHES "Linux" OR CMAKE_SYSTEM MATCHES "Darwin")
-    ExternalProject_Add(fluidsynth
-            SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${FLUIDSYNTH_DIR}"
-            BINARY_DIR ${FLUIDSYNTH_BUILD_DIR}
-            CMAKE_ARGS
-            ${FLUIDSYNTH_COMMON_ARGS}
-            INSTALL_COMMAND ""
-    )
-
-    if(CMAKE_SYSTEM MATCHES "Linux")
-        message(STATUS "Building for Linux...")
-        set(FLUIDSYNTH "${FLUIDSYNTH_BUILD_DIR}/src/libfluidsynth.so")
-    else()  # Darwin/MacOS
-        message(STATUS "Building for MacOS...")
-        set(FLUIDSYNTH "${FLUIDSYNTH_BUILD_DIR}/src/FluidSynth.framework")
-    endif()
+    set(EXTRA_ARGS -DPKG_CONFIG_EXECUTABLE=$ENV{PKG_CONFIG_EXECUTABLE}
+            -DCMAKE_TOOLCHAIN_FILE=$ENV{CMAKE_TOOLCHAIN_FILE})
+    set(FLUIDSYNTH_LIB "libfluidsynth.lib")
+elseif(CMAKE_SYSTEM MATCHES "Linux")
+    message(STATUS "Building for Linux...")
+    set(EXTRA_ARGS "")
+    set(FLUIDSYNTH_LIB "libfluidsynth.so")
+elseif(CMAKE_SYSTEM MATCHES "Darwin")
+    message(STATUS "Building for MacOS...")
+    set(EXTRA_ARGS "")
+    set(FLUIDSYNTH_LIB "FluidSynth.framework")
 endif()
 
-add_dependencies(${PROJECT_NAME} fluidsynth)
+ExternalProject_Add(fluidsynth
+        SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${FLUIDSYNTH_DIR}"
+        BINARY_DIR ${FLUIDSYNTH_BUILD_DIR}
+        CMAKE_ARGS
+        ${FLUIDSYNTH_COMMON_ARGS}
+        ${EXTRA_ARGS}
+        INSTALL_COMMAND ""
+)
 
+set(FLUIDSYNTH "${FLUIDSYNTH_BUILD_DIR}/src/${FLUIDSYNTH_LIB}")
+
+add_dependencies(${PROJECT_NAME} fluidsynth)
 
 target_link_libraries(${PROJECT_NAME}
   PRIVATE
