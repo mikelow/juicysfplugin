@@ -105,63 +105,38 @@ target_sources(${PROJECT_NAME}
     "${SRC_DIR}/TablesComponent.cpp"
 )
 
-# Common arguments for ExternalProject_Add
-set(FLUIDSYNTH_COMMON_ARGS
-        -Denable-floats=1
-        -Denable-libsndfile=1
-        -Denable-threads=1
-        -Denable-pkgconfig=1
-        -Denable-aufile=0
-        -Denable-dbus=0
-        -Denable-dsound=0
-        -Denable-ipv6=0
-        -Denable-jack=0
-        -Denable-ladspa=0
-        -Denable-libinstpatch=0
-        -Denable-midishare=0
-        -Denable-network=0
-        -Denable-openmp=0
-        -Denable-oss=0
-        -Denable-pulseaudio=0
-        -Denable-readline=0
-        -Denable-sdl2=0
-        -Denable-wasapi=0
-        -Denable-waveout=0
-        -Denable-winmidi=0
-        -Denable-alsa=0
-        -Denable-lash=0
-        -DBUILD_SHARED_LIBS=0
-        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-)
+# Fluidsynth library options
+set(enable_floats ON CACHE BOOL "Enable floats")
+set(enable_libsndfile ON CACHE BOOL "Enable libsndfile")
+set(enable_threads ON CACHE BOOL "Enable threads")
+set(enable_pkgconfig ON CACHE BOOL "Enable pkgconfig")
+set(enable_aufile OFF CACHE BOOL "Enable aufile")
+set(enable_dbus OFF CACHE BOOL "Enable dbus")
+set(enable_dsound OFF CACHE BOOL "Enable dsound")
+set(enable_ipv6 OFF CACHE BOOL "Enable ipv6")
+set(enable_jack OFF CACHE BOOL "Enable jack")
+set(enable_ladspa OFF CACHE BOOL "Enable ladspa")
+set(enable_libinstpatch OFF CACHE BOOL "Enable libinstpatch")
+set(enable_midishare OFF CACHE BOOL "Enable midishare")
+set(enable_network OFF CACHE BOOL "Enable network")
+set(enable_openmp OFF CACHE BOOL "Enable openmp")
+set(enable_oss OFF CACHE BOOL "Enable oss")
+set(enable_pulseaudio OFF CACHE BOOL "Enable pulseaudio")
+set(enable_readline OFF CACHE BOOL "Enable readline")
+set(enable_sdl2 OFF CACHE BOOL "Enable sdl2")
+set(enable_wasapi OFF CACHE BOOL "Enable wasapi")
+set(enable_waveout OFF CACHE BOOL "Enable waveout")
+set(enable_winmidi OFF CACHE BOOL "Enable winmidi")
+set(enable_alsa OFF CACHE BOOL "Enable alsa")
+set(enable_lash OFF CACHE BOOL "Enable lash")
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
 
-# Platform-specific configurations
-if(WIN32)
-    message(STATUS "Building for Windows...")
-    set(EXTRA_ARGS -DPKG_CONFIG_EXECUTABLE=$ENV{PKG_CONFIG_EXECUTABLE}
-            -DCMAKE_TOOLCHAIN_FILE=$ENV{CMAKE_TOOLCHAIN_FILE})
-    set(FLUIDSYNTH_LIB "libfluidsynth.lib")
-elseif(CMAKE_SYSTEM MATCHES "Linux")
-    message(STATUS "Building for Linux...")
-    set(EXTRA_ARGS "")
-    set(FLUIDSYNTH_LIB "libfluidsynth.so")
-elseif(CMAKE_SYSTEM MATCHES "Darwin")
-    message(STATUS "Building for MacOS...")
-    set(EXTRA_ARGS "")
-    set(FLUIDSYNTH_LIB "FluidSynth.framework")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/${FLUIDSYNTH_DIR}" ${FLUIDSYNTH_BUILD_DIR})
+add_dependencies(${PROJECT_NAME} libfluidsynth)
+
+if(NOT ANDROID)
+    target_link_libraries(${PROJECT_NAME} PRIVATE libfluidsynth)
 endif()
-
-ExternalProject_Add(fluidsynth
-        SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${FLUIDSYNTH_DIR}"
-        BINARY_DIR ${FLUIDSYNTH_BUILD_DIR}
-        CMAKE_ARGS
-        ${FLUIDSYNTH_COMMON_ARGS}
-        ${EXTRA_ARGS}
-        INSTALL_COMMAND ""
-)
-
-set(FLUIDSYNTH "${FLUIDSYNTH_BUILD_DIR}/src/${FLUIDSYNTH_LIB}")
-
-add_dependencies(${PROJECT_NAME} fluidsynth)
 
 target_link_libraries(${PROJECT_NAME}
   PRIVATE
@@ -183,10 +158,6 @@ target_link_libraries(${PROJECT_NAME}
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags
 )
-
-if(NOT ANDROID)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${FLUIDSYNTH})
-endif()
 
 if(ANDROID)
     message(STATUS "Building for ANDROID...")
