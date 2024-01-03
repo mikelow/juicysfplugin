@@ -110,6 +110,10 @@ add_library(juicysfplugin_network STATIC
         "${SRC_DIR}/InstrServerMessage.cpp"
 )
 target_include_directories(juicysfplugin_network INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_compile_definitions(juicysfplugin_network PUBLIC
+    JUCE_USE_CURL=0
+    JUCE_WEB_BROWSER=0
+)
 target_link_libraries(juicysfplugin_network PRIVATE juce::juce_core)
 
 
