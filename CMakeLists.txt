@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
 
-include(ExternalProject)
-
 if(ANDROID_PLATFORM)
     set(PROJECT_NAME "juce_jni")
 else()
@@ -104,6 +102,16 @@ target_sources(${PROJECT_NAME}
     "${SRC_DIR}/TableComponent.cpp"
     "${SRC_DIR}/TablesComponent.cpp"
 )
+
+# Create juicysfplugin_network library to provide plugin network interface
+add_library(juicysfplugin_network STATIC
+        "${SRC_DIR}/InstrClient.cpp"
+        "${SRC_DIR}/PendingCalls.cpp"
+        "${SRC_DIR}/InstrServerMessage.cpp"
+)
+target_include_directories(juicysfplugin_network INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_link_libraries(juicysfplugin_network PRIVATE juce::juce_core)
+
 
 # Fluidsynth library options
 set(enable-floats ON CACHE BOOL "Enable floats")
