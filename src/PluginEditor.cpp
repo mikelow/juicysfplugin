@@ -19,7 +19,7 @@ JuicySFAudioProcessorEditor::JuicySFAudioProcessorEditor(
 : AudioProcessorEditor{&p}
 , processor{p}
 , valueTreeState{valueTreeState}
-, midiKeyboard{p.keyboardState, SurjectiveMidiKeyboardComponent::horizontalKeyboard}
+, midiKeyboard{p.keyboardState, MidiKeyboardComponent::horizontalKeyboard}
 , tablesComponent{valueTreeState}
 , filePicker{valueTreeState}
 , slidersComponent{valueTreeState, p.getFluidSynthModel()}

@@ -13,7 +13,6 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
 #include "TablesComponent.h"
-#include "SurjectiveMidiKeyboardComponent.h"
 #include "FilePicker.h"
 #include "SlidersComponent.h"
 
@@ -52,7 +51,7 @@ private:
     // resized.
     Value lastUIWidth, lastUIHeight;
 
-    SurjectiveMidiKeyboardComponent midiKeyboard;
+    MidiKeyboardComponent midiKeyboard;
     TablesComponent tablesComponent;
     FilePicker filePicker;
     SlidersComponent slidersComponent;
